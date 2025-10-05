@@ -1,5 +1,5 @@
 # CloudMesh
-A comprehensive platform for managing cloud resources across multiple providers (AWS, GCP, Azure, DigitalOcean) with unified billing, real-time monitoring, and Infrastructure as Code export capabilities.
+A platform for managing cloud resources across multiple providers.
 
 ## Features
 - Multi-Cloud Support: Manage resources from AWS, GCP, Azure, and DigitalOcean.
