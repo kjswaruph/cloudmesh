@@ -1,0 +1,8 @@
+build
+.gradle
+
+frontend/
+.env
+
+.github
+.gitignore

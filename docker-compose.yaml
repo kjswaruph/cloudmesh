@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: cloudmesh-postgres
+    restart: unless-stopped
+    env_file: .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 10s
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudmesh-backend
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cloudmesh-frontend
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
