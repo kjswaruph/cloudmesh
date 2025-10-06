@@ -6,10 +6,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+
+import java.util.UUID;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name="users")
@@ -18,11 +22,12 @@ import org.hibernate.annotations.CreationTimestamp;
 @AllArgsConstructor
 public class User { 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
-    @Column(nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "user_id", updatable = false, nullable = false)
+    private UUID userId;
+    @Column(name="first_name", nullable = false)
     private String firstName;
-    @Column(nullable = false)
+    @Column(name="last_name", nullable = false)
     private String lastName;
     @Column(nullable = false, unique = true)
     private String email;
@@ -32,7 +37,12 @@ public class User {
     private String password;
     @Column(nullable = false)
     private String role;
+
     @CreationTimestamp
-    @Column(updatable = false)
-    private String dateCreated;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 }

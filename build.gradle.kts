@@ -32,14 +32,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-graphql")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 
-    // Cloud
-    runtimeOnly("com.pulumi:pulumi:1.16.1")
+    // Pulumi
+    implementation("com.pulumi:pulumi:1.16.1")
     implementation("com.pulumi:aws:7.7.0")
     implementation("com.pulumi:azure-native:3.8.0")
     implementation("com.pulumi:gcp:9.2.0")

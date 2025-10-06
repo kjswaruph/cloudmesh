@@ -1,10 +1,8 @@
 package app.cmesh.user;
 
-import app.cmesh.util.Role;
-import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Example;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -13,8 +11,6 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 
@@ -45,7 +41,7 @@ public class UserController {
 
     @QueryMapping
     public Optional<User> user(@Argument String id) {
-        return userRepository.findById(Long.valueOf(id));
+        return userRepository.findById(UUID.fromString(id));
     }
 
     @QueryMapping
@@ -96,7 +92,7 @@ public class UserController {
     public boolean deleteUser(@Argument String id) {
         log.info("Mutation: deleteUser requested for id: {}", id);
         try{
-            userRepository.deleteById(Long.valueOf(id));
+            userRepository.deleteById(UUID.fromString(id));
             return true;
         }catch (Exception e){
             log.error("Error deleting user with id {}: {}", id, e.getMessage());
