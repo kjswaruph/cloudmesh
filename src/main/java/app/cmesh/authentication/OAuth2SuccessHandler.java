@@ -2,7 +2,7 @@ package app.cmesh.authentication;
 
 import app.cmesh.user.User;
 import app.cmesh.user.UserRepository;
-import app.cmesh.util.Role;
+import app.cmesh.user.Role;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -2,16 +2,25 @@ type Query {
     users(user: UserInput): [User!]!
     user(id: ID!): User
     me: User
+    resources: [Resource!]!
+    resource(id: ID!): Resource
+    projects: [Project!]!
+    project(id: ID!): Project
 }
 
 type Mutation {
     addUser(firstName: String!, lastName: String!, username: String!, email: String!, password: String!): User!
     deleteUser(id: ID!): Boolean!
+    addProject(projectName: String!, description: String, userId: ID!): Project!
+    deleteProject(id: ID!): Boolean!
+    addResource(resourceName: String!, projectId: ID!, provider: CloudProvider!, resourceType: ResourceType!, resourceRegion: String!, resourceCost: Float): Resource!
+    deleteResource(id: ID!): Boolean!
 }
 
 input UserInput {
     firstName: String!
     lastName: String!
+    projectIdentifier: String!
     username: String!
     email: String!
 }
@@ -24,5 +33,67 @@ type User{
     email: String!
     role: String!
     dateCreated: String!
+    updatedAt: String!
+}
+
+type Project{
+    projectId: ID!
+    projectName: String!
+    description: String
+    user: User!
+    resources: [Resource!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Resource{
+    resourceId: ID!
+    resourceName: String!
+    project: Project!
+    provider: CloudProvider!
+    resourceType: ResourceType!
+    resourceStatus: ResourceStatus!
+    resourceRegion: String!
+    resourceCost: Float
+    createdAt: String!
+    updatedAt: String!
+}
+
+enum CloudProvider {
+    AWS
+    AZURE
+    GCP
+    DIGITALOCEAN
+}
+
+enum ResourceType {
+    # AWS
+    EC2_INSTANCE
+    S3_BUCKET
+    RDS_DATABASE
+    VPC
+    LAMBDA_FUNCTION
+
+    # GCP
+    COMPUTE_INSTANCE
+    STORAGE_BUCKET
+    CLOUD_SQL
+
+    # Azure
+    VIRTUAL_MACHINE
+    STORAGE_ACCOUNT
+    SQL_DATABASE
+
+    #DigitalOcean
+    DROPLET
+    SPACES_BUCKET
+    DATABASE_CLUSTER
+}
+
+enum ResourceStatus {
+    ACTIVE
+    INACTIVE
+    PENDING
+    DELETED
 }
 
