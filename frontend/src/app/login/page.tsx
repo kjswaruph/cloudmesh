@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -225,4 +225,19 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+    return (
+        // The component that uses useSearchParams is now safely wrapped
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center bg-background p-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            }
+        >
+            <LoginContent />
+        </Suspense>
+    );
 }

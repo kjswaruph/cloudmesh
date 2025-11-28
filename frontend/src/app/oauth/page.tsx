@@ -1,6 +1,7 @@
-// pages/oauth-redirect.tsx
+'use client'
+
 import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export default function OAuthRedirect() {
     const router = useRouter();

@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
+    output: 'standalone',
+    async rewrites() {
     return [
       { source: "/auth/:path*", destination: "http://localhost:8080/auth/:path*" },
       { source: "/graphql", destination: "http://localhost:8080/graphql" },
