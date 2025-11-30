@@ -35,7 +35,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aspectj")
 
     // Modules
-
+    implementation(project(":cloudmesh-aws"))
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")
@@ -52,10 +52,10 @@ dependencies {
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.springframework.graphql:spring-graphql-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.testcontainers:postgresql:1.21.3")
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+    testImplementation("org.springframework.graphql:spring-graphql-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test> {

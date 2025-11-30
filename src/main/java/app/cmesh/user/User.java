@@ -10,6 +10,7 @@ import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.UUID;
@@ -18,6 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name="users")
 @Data
+@ToString(exclude = "password")
 @NoArgsConstructor
 @AllArgsConstructor
 public class User { 
@@ -33,7 +35,7 @@ public class User {
     private String email;
     @Column(nullable = false, unique = true)
     private String username;
-    @Column
+    @Column(nullable = false)
     private String password;
     @Column(nullable = false)
     private String role;
