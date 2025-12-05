@@ -1,6 +1,6 @@
-package app.cmesh.cloud.model;
+package app.cmesh.dashboard;
 
-import app.cmesh.cloud.model.enums.CloudProvider;
+import app.cmesh.dashboard.enums.CloudProvider;
 import app.cmesh.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,6 +39,11 @@ public class CloudCredentials {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "provider_config", columnDefinition = "jsonb", nullable = false)
     private Map<String, Object> providerConfig;
+    @Column(name = "friendly_name", nullable = false)
+    private String friendlyName;
+    @Column(name = "last_validated_at")
+    @UpdateTimestamp
+    private Instant lastValidatedAt;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -46,7 +51,7 @@ public class CloudCredentials {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
     public enum CredentialStatus{
-        ACTIVE, INVALID, EXPIRED
+        ACTIVE, INVALID, EXPIRED, PENDING
     }
 }
 
