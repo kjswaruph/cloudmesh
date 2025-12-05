@@ -1,7 +1,6 @@
-package app.cmesh;
+package app.cmesh.aws;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;

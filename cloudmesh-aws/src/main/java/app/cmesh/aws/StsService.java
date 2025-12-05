@@ -1,4 +1,4 @@
-package app.cmesh;
+package app.cmesh.aws;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;

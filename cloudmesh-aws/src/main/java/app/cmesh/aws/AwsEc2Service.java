@@ -1,4 +1,4 @@
-package app.cmesh;
+package app.cmesh.aws;
 
 import java.util.List;
 import software.amazon.awssdk.services.ec2.Ec2Client;

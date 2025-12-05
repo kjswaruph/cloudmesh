@@ -1,4 +1,4 @@
-package app.cmesh;
+package app.cmesh.aws;
 
 public record AwsConfig (
     String accessKey,
