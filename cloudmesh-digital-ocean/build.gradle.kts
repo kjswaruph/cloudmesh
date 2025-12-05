@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "app.cmesh.docean"
+group = "app.cmesh"
 version = "0.0.1-SNAPSHOT"
 
 repositories {
