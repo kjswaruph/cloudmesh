@@ -1,0 +1,40 @@
+server:
+  port: 8081
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  application:
+    name: cloudmesh-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth
+              uri: http://localhost:8080
+              predicates:
+                - Path=/auth/**
+              filters:
+                - StripPrefix=0
+                  # Protected route with rate limiting
+            - id: hello-service
+              uri: http://localhost:8080
+              predicates:
+                - Path=/hello/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userKeyResolver}"
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 50
+                    redis-rate-limiter.requestedTokens: 1
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.data.redis: DEBUG
