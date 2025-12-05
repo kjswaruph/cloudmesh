@@ -8,10 +8,7 @@ import com.azure.resourcemanager.resources.models.ResourceGroups;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.UUID;
-/**
- * Validator for Azure credentials using App Registration with Client Secret.
- * Pure Java library - no Spring dependencies.
- */
+
 
 @Slf4j
 public class AzureCredentialValidator implements CloudCredentialValidator {

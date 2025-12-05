@@ -1,4 +1,4 @@
-package app.cmesh.aws.validation;
+package app.cmesh.credentials;
 
 public record ValidationResult(
         boolean valid,

@@ -1,7 +1,5 @@
 package app.cmesh.azure.validation;
-/**
- * Result of credential validation operations.
- */
+
 public record ValidationResult(
         boolean valid,
         String message,

@@ -81,9 +81,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Extract JWT from Authorization header
-     */
     private String extractJwtFromHeader(HttpServletRequest request) {
         String authorizationHeader = request.getHeader("Authorization");
 
@@ -94,9 +91,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    /**
-     * Extract JWT from HttpOnly cookie
-     */
     private String extractJwtFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
 

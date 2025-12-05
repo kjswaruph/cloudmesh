@@ -1,7 +1,4 @@
 package app.cmesh.gcp.validation;
-/**
- * Result of credential validation operations.
- */
 public record ValidationResult(
         boolean valid,
         String message,

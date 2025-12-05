@@ -12,10 +12,7 @@ import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.DescribeRegionsRequest;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import java.util.Map;
-/**
- * Validator for AWS credentials using STS AssumeRole pattern.
- * Pure Java library - no Spring dependencies.
- */
+
 @Slf4j
 public class AwsCredentialValidator implements CloudCredentialValidator {
     private final String cloudmeshAwsAccessKey;

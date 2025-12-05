@@ -10,10 +10,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
-/**
- * Validator for DigitalOcean credentials using Personal Access Token.
- * Pure Java library - no Spring dependencies.
- */
 @Slf4j
 public class DigitalOceanCredentialValidator implements CloudCredentialValidator {
 
