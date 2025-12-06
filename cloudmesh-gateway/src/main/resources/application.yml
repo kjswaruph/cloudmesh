@@ -4,8 +4,8 @@ server:
 spring:
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
   application:
     name: cloudmesh-gateway
   cloud:
@@ -13,15 +13,32 @@ spring:
       server:
         webflux:
           routes:
+            - id: oauth2-authorization
+              uri: ${SPRING_CLOUD_GATEWAY_ROUTES_0_URI:http://localhost:8080}
+              predicates:
+                - Path=/oauth2/**
+              filters:
+                - StripPrefix=0
+            - id: oauth2-login
+              uri: ${SPRING_CLOUD_GATEWAY_ROUTES_1_URI:http://localhost:8080}
+              predicates:
+                - Path=/login/oauth2/**
+              filters:
+                - StripPrefix=0
             - id: auth
-              uri: http://localhost:8080
+              uri: http://backend:8080
               predicates:
                 - Path=/auth/**
               filters:
                 - StripPrefix=0
-                  # Protected route with rate limiting
+            - id: graphql
+              uri: http://backend:8080
+              predicates:
+                - Path=/graphql
+              filters:
+                - StripPrefix=0
             - id: hello-service
-              uri: http://localhost:8080
+              uri: http://backend:8080
               predicates:
                 - Path=/hello/**
               filters:
@@ -33,6 +50,15 @@ spring:
                     redis-rate-limiter.requestedTokens: 1
 jwt:
   secret: ${JWT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
 
 logging:
   level:

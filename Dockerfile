@@ -5,6 +5,10 @@ COPY gradle gradle
 COPY build.gradle.kts settings.gradle.kts ./
 RUN gradle dependencies --no-daemon
 COPY src ./src
+COPY cloudmesh-aws ./cloudmesh-aws
+COPY cloudmesh-gcp ./cloudmesh-gcp
+COPY cloudmesh-azure ./cloudmesh-azure
+COPY cloudmesh-digital-ocean ./cloudmesh-digital-ocean
 RUN gradle bootJar --no-daemon
 
 # Run

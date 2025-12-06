@@ -5,6 +5,10 @@ RUN npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_GRAPHQL_ENDPOINT
+ARG API_URL
+ENV NEXT_PUBLIC_GRAPHQL_ENDPOINT=${NEXT_PUBLIC_GRAPHQL_ENDPOINT}
+ENV API_URL=${API_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -23,5 +27,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
+ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
