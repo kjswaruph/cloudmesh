@@ -1,5 +1,4 @@
 package app.cmesh.aws.validation;
-
 public record ValidationResult(
         boolean valid,
         String message,

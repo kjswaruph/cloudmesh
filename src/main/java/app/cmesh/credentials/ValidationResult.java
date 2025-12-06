@@ -1,5 +1,4 @@
 package app.cmesh.credentials;
-
 public record ValidationResult(
         boolean valid,
         String message,
