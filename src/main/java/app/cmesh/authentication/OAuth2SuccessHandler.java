@@ -42,7 +42,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             if (email == null || email.isBlank()) {
                 log.error("Email not provided by OAuth2 provider: {}", provider);
-                handleAuthenticationFailure(response, "email_missing");
+                handleAuthenticationFailure(request, response, "email_missing");
                 return;
             }
 
@@ -52,11 +52,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             log.info("OAuth2 login successful for user: {} via {}", email, provider);
 
-            String targetUrl = frontendUrl + "/oauth-redirect";
+            String targetUrl = frontendUrl + "/oauth";
+            log.info("Redirecting to: {}", targetUrl);
+            log.info("Frontend URL configured as: {}", frontendUrl);
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         }catch (Exception e) {
             log.error("Error during OAuth2 authentication: {}", e.getMessage(), e);
-            handleAuthenticationFailure(response, "authentication_failed");
+            handleAuthenticationFailure(request, response, "authentication_failed");
         }
     }
 
@@ -121,9 +123,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         return "oauth2";
     }
 
-    private void handleAuthenticationFailure(HttpServletResponse response, String error) throws IOException {
+    private void handleAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, String error) throws IOException {
         String errorUrl = frontendUrl + "/login?error=" + error;
-        getRedirectStrategy().sendRedirect(null, response, errorUrl);
+        getRedirectStrategy().sendRedirect( request, response, errorUrl);
     }
 
 }

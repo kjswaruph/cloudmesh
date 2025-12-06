@@ -1,8 +1,8 @@
 package app.cmesh.cloud;
 
-import app.cmesh.AwsEc2Service;
-import app.cmesh.AwsS3Service;
-import app.cmesh.ConnectedAwsAccount;
+import app.cmesh.aws.AwsEc2Service;
+import app.cmesh.aws.AwsS3Service;
+import app.cmesh.aws.ConnectedAwsAccount;
 import java.util.List;
 import org.springframework.stereotype.Service;
 

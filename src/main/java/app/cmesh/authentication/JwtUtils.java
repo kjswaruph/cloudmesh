@@ -55,19 +55,32 @@ public class JwtUtils {
         cookie.setPath("/");
         cookie.setMaxAge(cookieExpiration);
 
-        if (cookieDomain != null && !cookieDomain.isBlank()) {
+        // Don't set domain to allow cookie to work across localhost and internal container names
+        // Only set domain if explicitly configured and not empty
+        if (cookieDomain != null && !cookieDomain.isBlank() && !cookieDomain.equals("localhost")) {
             cookie.setDomain(cookieDomain);
         }
 
         response.addCookie(cookie);
 
-        // Add SameSite attribute
-        String setCookieHeader = response.getHeader("Set-Cookie");
-        if (setCookieHeader != null && !setCookieHeader.contains("SameSite")) {
-            response.setHeader("Set-Cookie", setCookieHeader + "; SameSite=Lax");
+        // Build Set-Cookie header with SameSite attribute
+        StringBuilder cookieHeader = new StringBuilder();
+        cookieHeader.append(cookieName).append("=").append(token)
+                .append("; Path=/")
+                .append("; Max-Age=").append(cookieExpiration)
+                .append("; HttpOnly");
+
+        if (cookieSecure) {
+            cookieHeader.append("; Secure");
         }
 
-        log.debug("JWT cookie set: name={}, maxAge={}, secure={}, httpOnly=true",
+        // Use Lax for better compatibility with redirects
+        cookieHeader.append("; SameSite=Lax");
+
+        // Set the complete cookie header
+        response.setHeader("Set-Cookie", cookieHeader.toString());
+
+        log.debug("JWT cookie set: name={}, maxAge={}, secure={}, httpOnly=true, sameSite=Lax",
                 cookieName, cookieExpiration, cookieSecure);
     }
 

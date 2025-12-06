@@ -1,27 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Protected routes that require authentication
-  const protectedRoutes = ['/dashboard'];
-
-  // Check if the current path is protected
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-
-  if (isProtectedRoute) {
-    // Check for JWT cookie
-    const jwtToken = request.cookies.get('jwt_token');
-
-    if (!jwtToken) {
-      // No JWT cookie found, redirect to login
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
+export function middleware(_request: NextRequest) {
+  // Allow all requests through - authentication will be handled client-side
+  // This prevents race conditions where cookies are set after login but before redirect
   return NextResponse.next();
 }
 

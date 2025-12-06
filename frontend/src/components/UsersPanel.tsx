@@ -26,7 +26,7 @@ export function UsersPanel() {
   const [adding, setAdding] = useState<boolean>(false);
 
   const graphql = async <T,>(query: string, variables?: Record<string, any>): Promise<T> => {
-    const res = await fetch('http://localhost:8080/graphql', {
+    const res = await fetch('http://localhost:8081/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),

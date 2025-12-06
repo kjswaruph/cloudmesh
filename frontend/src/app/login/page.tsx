@@ -42,8 +42,8 @@ function LoginContent() {
 
       if (res.ok) {
         // Redirect to original destination or default to dashboard
-        const redirect = searchParams.get('redirect') || '/dashboard';
-        router.push(redirect);
+        // Use window.location for full page reload to ensure cookies are properly set
+        window.location.href = searchParams.get('redirect') || '/dashboard';
         return;
       }
 

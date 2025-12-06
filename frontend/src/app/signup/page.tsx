@@ -87,7 +87,8 @@ export default function SignupPage() {
 
       if (res.ok) {
         // Successfully registered and auto-logged in
-        router.push("/dashboard");
+        // Use window.location for full page reload to ensure cookies are properly set
+        window.location.href = "/dashboard";
         return;
       }
 

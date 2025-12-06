@@ -36,6 +36,9 @@ dependencies {
 
     // Modules
     implementation(project(":cloudmesh-aws"))
+    implementation(project(":cloudmesh-digital-ocean"))
+    implementation(project(":cloudmesh-gcp"))
+    implementation(project(":cloudmesh-azure"))
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")

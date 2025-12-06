@@ -1,15 +1,12 @@
 'use client'
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function OAuthRedirect() {
-    const router = useRouter();
-
     useEffect(() => {
-        // Just redirect to dashboard
-        router.push('/dashboard');
-    }, [router]);
+        // Use window.location for full page reload to ensure cookies are properly set
+        window.location.href = '/dashboard';
+    }, []);
 
     return (
         <div className="flex items-center justify-center min-h-screen">
