@@ -4,8 +4,10 @@ import app.cmesh.dashboard.Resource;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.springframework.graphql.data.GraphQlRepository;
+import org.springframework.stereotype.Repository;
 
-@GraphQlRepository
+@Repository
 public interface ResourceRepository extends JpaRepository<Resource, UUID>, QueryByExampleExecutor<Resource> {
+
+    java.util.Optional<Resource> findByProviderResourceId(String providerResourceId);
 }

@@ -1,4 +1,4 @@
-package app.cmesh.credentials.security;
+package app.cmesh.credentials;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-
 @Service
 @Slf4j
 public class CredentialEncryptionService {
@@ -25,32 +24,21 @@ public class CredentialEncryptionService {
     private static final int AES_KEY_SIZE = 256; // 256 bits
 
     private final SecretKey encryptionKey;
-    private final SecretKey oldEncryptionKey; // For key rotation
     private final SecureRandom secureRandom;
 
-
     public CredentialEncryptionService(
-            @Value("${credential.encryption.key}") String encryptionKeyBase64,
-            @Value("${credential.encryption.key.old:#{null}}") String oldEncryptionKeyBase64) {
+            @Value("${credential.encryption.key}") String encryptionKeyBase64) {
 
         if (encryptionKeyBase64 == null || encryptionKeyBase64.isBlank()) {
             throw new IllegalStateException(
-                "Encryption key not configured. Set 'credential.encryption.key' environment variable."
-            );
+                    "Encryption key not configured. Set 'credential.encryption.key' environment variable.");
         }
 
         this.encryptionKey = decodeKey(encryptionKeyBase64);
-        this.oldEncryptionKey = oldEncryptionKeyBase64 != null && !oldEncryptionKeyBase64.isBlank()
-            ? decodeKey(oldEncryptionKeyBase64)
-            : null;
         this.secureRandom = new SecureRandom();
 
         log.info("Credential encryption service initialized with AES-256-GCM");
-        if (oldEncryptionKey != null) {
-            log.info("Old encryption key configured for rotation support");
-        }
     }
-
 
     public String encrypt(String plaintext) {
         if (plaintext == null || plaintext.isEmpty()) {
@@ -84,33 +72,19 @@ public class CredentialEncryptionService {
         }
     }
 
-    
     public String decrypt(String ciphertext) {
         if (ciphertext == null || ciphertext.isEmpty()) {
             return ciphertext;
         }
 
         try {
-            // Try current key first
             return decryptWithKey(ciphertext, encryptionKey);
         } catch (Exception e) {
-            // If current key fails and old key exists, try old key (key rotation scenario)
-            if (oldEncryptionKey != null) {
-                try {
-                    log.debug("Current key failed, attempting decryption with old key");
-                    return decryptWithKey(ciphertext, oldEncryptionKey);
-                } catch (Exception ex) {
-                    log.error("Decryption failed with both current and old keys", ex);
-                    throw new EncryptionException("Failed to decrypt credential data", ex);
-                }
-            }
-
             log.error("Decryption failed", e);
             throw new EncryptionException("Failed to decrypt credential data", e);
         }
     }
 
-    
     private String decryptWithKey(String ciphertext, SecretKey key) throws Exception {
         // Decode from Base64
         byte[] decoded = Base64.getDecoder().decode(ciphertext);
@@ -133,7 +107,6 @@ public class CredentialEncryptionService {
         return new String(plaintext);
     }
 
-    
     public boolean isEncrypted(String value) {
         if (value == null || value.isEmpty()) {
             return false;
@@ -148,7 +121,6 @@ public class CredentialEncryptionService {
         }
     }
 
-    
     public static String generateNewKey() {
         try {
             KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
@@ -160,14 +132,12 @@ public class CredentialEncryptionService {
         }
     }
 
-    
     private SecretKey decodeKey(String base64Key) {
         try {
             byte[] decodedKey = Base64.getDecoder().decode(base64Key);
             if (decodedKey.length != 32) { // 256 bits = 32 bytes
                 throw new IllegalArgumentException(
-                    "Invalid key length: " + (decodedKey.length * 8) + " bits. Expected 256 bits."
-                );
+                        "Invalid key length: " + (decodedKey.length * 8) + " bits. Expected 256 bits.");
             }
             return new SecretKeySpec(decodedKey, "AES");
         } catch (Exception e) {
@@ -175,13 +145,4 @@ public class CredentialEncryptionService {
         }
     }
 
-    
-    public static void main(String[] args) {
-        String newKey = generateNewKey();
-        System.out.println("Generated new AES-256 encryption key:");
-        System.out.println(newKey);
-        System.out.println("\nAdd this to your environment variables:");
-        System.out.println("CREDENTIAL_ENCRYPTION_KEY=" + newKey);
-    }
 }
-

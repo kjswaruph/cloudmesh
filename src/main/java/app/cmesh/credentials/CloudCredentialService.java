@@ -1,7 +1,7 @@
 package app.cmesh.credentials;
 
-import app.cmesh.credentials.security.CredentialEncryptionService;
-import app.cmesh.credentials.validation.CredentialValidationService;
+import app.cmesh.credentials.CredentialEncryptionService;
+import app.cmesh.credentials.CredentialValidationService;
 import app.cmesh.dashboard.CloudCredentials;
 import app.cmesh.dashboard.CloudCredentials.CredentialStatus;
 import app.cmesh.dashboard.enums.CloudProvider;
@@ -66,7 +66,7 @@ public class CloudCredentialService {
         if (validateImmediately) {
             ValidationResult validationResult = validateCredentialInternal(saved.getCredentialId(), userId);
             log.info("Immediate validation result for credential {}: {}",
-                saved.getCredentialId(), validationResult.valid() ? "SUCCESS" : "FAILED");
+                    saved.getCredentialId(), validationResult.valid() ? "SUCCESS" : "FAILED");
         }
 
         saved = credentialsRepository.findById(saved.getCredentialId()).orElse(saved);
@@ -109,7 +109,7 @@ public class CloudCredentialService {
     public Map<String, String> getDecryptedConfig(UUID credentialId, UUID userId) {
         CloudCredentials credential = credentialsRepository.findByCredentialIdAndUser_UserId(credentialId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Credential not found or access denied: " + credentialId));
+                        "Credential not found or access denied: " + credentialId));
 
         return decryptSensitiveFields(credential.getProvider(), credential.getProviderConfig());
     }
@@ -118,7 +118,7 @@ public class CloudCredentialService {
     public void updateStatus(UUID credentialId, UUID userId, CredentialStatus status) {
         CloudCredentials credential = credentialsRepository.findByCredentialIdAndUser_UserId(credentialId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Credential not found or access denied: " + credentialId));
+                        "Credential not found or access denied: " + credentialId));
 
         credential.setStatus(status);
         credentialsRepository.save(credential);
@@ -130,7 +130,7 @@ public class CloudCredentialService {
     public void markAsValidated(UUID credentialId, UUID userId) {
         CloudCredentials credential = credentialsRepository.findByCredentialIdAndUser_UserId(credentialId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Credential not found or access denied: " + credentialId));
+                        "Credential not found or access denied: " + credentialId));
 
         credential.setStatus(CredentialStatus.ACTIVE);
         credential.setLastValidatedAt(Instant.now());
@@ -150,7 +150,6 @@ public class CloudCredentialService {
         }
     }
 
-
     @Transactional
     public ValidationResult validateCredential(UUID credentialId, UUID userId) {
         return validateCredentialInternal(credentialId, userId);
@@ -159,15 +158,14 @@ public class CloudCredentialService {
     private ValidationResult validateCredentialInternal(UUID credentialId, UUID userId) {
         CloudCredentials credential = credentialsRepository.findByCredentialIdAndUser_UserId(credentialId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Credential not found or access denied: " + credentialId));
+                        "Credential not found or access denied: " + credentialId));
 
         log.info("Validating credential {} for provider {}", credentialId, credential.getProvider());
 
         // Get decrypted config
         Map<String, String> decryptedConfig = decryptSensitiveFields(
-            credential.getProvider(),
-            credential.getProviderConfig()
-        );
+                credential.getProvider(),
+                credential.getProviderConfig());
 
         // Validate against cloud provider
         ValidationResult result = validationService.validate(credential.getProvider(), decryptedConfig);
@@ -191,7 +189,7 @@ public class CloudCredentialService {
     public void deleteCredential(UUID credentialId, UUID userId) {
         CloudCredentials credential = credentialsRepository.findByCredentialIdAndUser_UserId(credentialId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                    "Credential not found or access denied: " + credentialId));
+                        "Credential not found or access denied: " + credentialId));
 
         // Secure deletion: overwrite sensitive data
         Map<String, Object> wiped = new HashMap<>();
@@ -206,7 +204,6 @@ public class CloudCredentialService {
         log.info("Deleted credential {} for user {}", credentialId, userId);
     }
 
-
     public boolean isOwner(UUID credentialId, UUID userId) {
         return credentialsRepository.existsByCredentialIdAndUser_UserId(credentialId, userId);
     }
@@ -216,7 +213,8 @@ public class CloudCredentialService {
 
         switch (provider) {
             case AWS:
-                // AWS: External ID doesn't need encryption (it's not secret), but we encrypt it anyway
+                // AWS: External ID doesn't need encryption (it's not secret), but we encrypt it
+                // anyway
                 // RoleArn is public information
                 if (config.containsKey("externalId")) {
                     encrypted.put("externalId", encryptionService.encrypt(config.get("externalId")));
@@ -227,7 +225,7 @@ public class CloudCredentialService {
                 // GCP: Encrypt entire service account JSON
                 if (config.containsKey("serviceAccountJson")) {
                     encrypted.put("serviceAccountJson",
-                        encryptionService.encrypt(config.get("serviceAccountJson")));
+                            encryptionService.encrypt(config.get("serviceAccountJson")));
                 }
                 break;
 
@@ -235,7 +233,7 @@ public class CloudCredentialService {
                 // Azure: Encrypt client secret
                 if (config.containsKey("clientSecret")) {
                     encrypted.put("clientSecret",
-                        encryptionService.encrypt(config.get("clientSecret")));
+                            encryptionService.encrypt(config.get("clientSecret")));
                 }
                 break;
 
@@ -243,7 +241,7 @@ public class CloudCredentialService {
                 // DigitalOcean: Encrypt API token
                 if (config.containsKey("apiToken")) {
                     encrypted.put("apiToken",
-                        encryptionService.encrypt(config.get("apiToken")));
+                            encryptionService.encrypt(config.get("apiToken")));
                 }
                 break;
         }
@@ -265,28 +263,28 @@ public class CloudCredentialService {
             case AWS:
                 if (config.containsKey("externalId")) {
                     decrypted.put("externalId",
-                        encryptionService.decrypt((String) config.get("externalId")));
+                            encryptionService.decrypt((String) config.get("externalId")));
                 }
                 break;
 
             case GCP:
                 if (config.containsKey("serviceAccountJson")) {
                     decrypted.put("serviceAccountJson",
-                        encryptionService.decrypt((String) config.get("serviceAccountJson")));
+                            encryptionService.decrypt((String) config.get("serviceAccountJson")));
                 }
                 break;
 
             case AZURE:
                 if (config.containsKey("clientSecret")) {
                     decrypted.put("clientSecret",
-                        encryptionService.decrypt((String) config.get("clientSecret")));
+                            encryptionService.decrypt((String) config.get("clientSecret")));
                 }
                 break;
 
             case DIGITALOCEAN:
                 if (config.containsKey("apiToken")) {
                     decrypted.put("apiToken",
-                        encryptionService.decrypt((String) config.get("apiToken")));
+                            encryptionService.decrypt((String) config.get("apiToken")));
                 }
                 break;
         }
@@ -312,8 +310,6 @@ public class CloudCredentialService {
                 region,
                 credential.getLastValidatedAt(),
                 credential.getCreatedAt(),
-                credential.getUpdatedAt()
-        );
+                credential.getUpdatedAt());
     }
 }
-

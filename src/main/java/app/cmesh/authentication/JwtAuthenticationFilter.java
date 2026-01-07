@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 // TODO: Add caching layer
 @Slf4j
 @Component
@@ -39,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = null;
         String username = null;
 
-        try{
+        try {
             jwt = extractJwtFromHeader(request);
             if (jwt == null) {
                 jwt = extractJwtFromCookie(request);
@@ -49,10 +50,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 username = jwtUtils.extractUsername(jwt);
                 log.debug("JWT found, username: {}", username);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Error extracting JWT: {}", e.getMessage());
         }
-
 
         // If username is found and the user is not authenticated yet
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -71,10 +71,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Set the authentication in the security context
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.debug("User {} authenticated successfully", username);
-                }else {
+                } else {
                     log.warn("JWT token validation failed for user: {}", username);
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
                 log.error("Error authenticating user {}: {}", username, e.getMessage());
             }
         }
@@ -95,6 +95,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
 
         if (cookies != null) {
+            Arrays.stream(cookies).forEach(c -> log.debug("Cookie found: name={}, value={}, domain={}, path={}",
+                    c.getName(), c.getValue(), c.getDomain(), c.getPath()));
             return Arrays.stream(cookies)
                     .filter(cookie -> cookieName.equals(cookie.getName()))
                     .map(Cookie::getValue)

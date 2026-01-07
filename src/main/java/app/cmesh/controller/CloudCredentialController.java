@@ -3,25 +3,23 @@ package app.cmesh.controller;
 import app.cmesh.credentials.CloudCredentialDTO;
 import app.cmesh.credentials.CloudCredentialService;
 import app.cmesh.credentials.ValidationResult;
-import app.cmesh.credentials.graphql.AwsCredentialInput;
-import app.cmesh.credentials.graphql.AzureCredentialInput;
-import app.cmesh.credentials.graphql.DigitalOceanCredentialInput;
-import app.cmesh.credentials.graphql.GcpCredentialInput;
-import app.cmesh.credentials.graphql.ValidationResultDTO;
+import app.cmesh.credentials.dto.AwsCredentialInput;
+import app.cmesh.credentials.dto.AzureCredentialInput;
+import app.cmesh.credentials.dto.DigitalOceanCredentialInput;
+import app.cmesh.credentials.dto.GcpCredentialInput;
+import app.cmesh.credentials.dto.ValidationResultDTO;
 import app.cmesh.dashboard.enums.CloudProvider;
 import app.cmesh.user.User;
 import app.cmesh.user.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.graphql.data.method.annotation.Argument;
-import org.springframework.graphql.data.method.annotation.MutationMapping;
-import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,17 +28,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller
+@RestController
+@RequestMapping("/api/credentials")
 @RequiredArgsConstructor
 public class CloudCredentialController {
 
     private final CloudCredentialService credentialService;
     private final UserRepository userRepository;
+    private final app.cmesh.security.AuditService auditService;
 
-    @QueryMapping
+    @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<CloudCredentialDTO> cloudCredentials(
-            @Argument CloudProvider provider,
+            @RequestParam(required = false) CloudProvider provider,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -53,10 +53,10 @@ public class CloudCredentialController {
         return credentialService.listCredentials(userId);
     }
 
-    @QueryMapping
+    @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public CloudCredentialDTO cloudCredential(
-            @Argument String id,
+    public ResponseEntity<CloudCredentialDTO> cloudCredential(
+            @PathVariable String id,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -67,18 +67,17 @@ public class CloudCredentialController {
 
         Optional<CloudCredentialDTO> credential = credentialService.getCredential(credentialId, userId);
 
-        if (credential.isEmpty()) {
-            log.warn("Credential {} not found or access denied for user {}", credentialId, userId);
-            throw new IllegalArgumentException("Credential not found or access denied");
-        }
-
-        return credential.get();
+        return credential.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    log.warn("Credential {} not found or access denied for user {}", credentialId, userId);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
-    @MutationMapping
+    @PostMapping("/aws")
     @PreAuthorize("isAuthenticated()")
-    public CloudCredentialDTO connectAwsAccount(
-            @Argument @Valid AwsCredentialInput input,
+    public ResponseEntity<CloudCredentialDTO> connectAwsAccount(
+            @RequestBody @Valid AwsCredentialInput input,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -103,18 +102,20 @@ public class CloudCredentialController {
 
             log.info("AWS credential {} created successfully for user {}",
                     credential.credentialId(), userId);
-            return credential;
+
+            auditService.logCredentialCreation(userId, credential.credentialId(), "AWS");
+            return ResponseEntity.ok(credential);
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to connect AWS account for user {}: {}", userId, e.getMessage());
-            throw new IllegalArgumentException("Failed to connect AWS account: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @MutationMapping
+    @PostMapping("/gcp")
     @PreAuthorize("isAuthenticated()")
-    public CloudCredentialDTO connectGcpAccount(
-            @Argument @Valid GcpCredentialInput input,
+    public ResponseEntity<CloudCredentialDTO> connectGcpAccount(
+            @RequestBody @Valid GcpCredentialInput input,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -139,18 +140,18 @@ public class CloudCredentialController {
 
             log.info("GCP credential {} created successfully for user {}",
                     credential.credentialId(), userId);
-            return credential;
+            return ResponseEntity.ok(credential);
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to connect GCP account for user {}: {}", userId, e.getMessage());
-            throw new IllegalArgumentException("Failed to connect GCP account: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @MutationMapping
+    @PostMapping("/azure")
     @PreAuthorize("isAuthenticated()")
-    public CloudCredentialDTO connectAzureAccount(
-            @Argument @Valid AzureCredentialInput input,
+    public ResponseEntity<CloudCredentialDTO> connectAzureAccount(
+            @RequestBody @Valid AzureCredentialInput input,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -177,18 +178,18 @@ public class CloudCredentialController {
 
             log.info("Azure credential {} created successfully for user {}",
                     credential.credentialId(), userId);
-            return credential;
+            return ResponseEntity.ok(credential);
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to connect Azure account for user {}: {}", userId, e.getMessage());
-            throw new IllegalArgumentException("Failed to connect Azure account: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @MutationMapping
+    @PostMapping("/digitalocean")
     @PreAuthorize("isAuthenticated()")
-    public CloudCredentialDTO connectDigitalOceanAccount(
-            @Argument @Valid DigitalOceanCredentialInput input,
+    public ResponseEntity<CloudCredentialDTO> connectDigitalOceanAccount(
+            @RequestBody @Valid DigitalOceanCredentialInput input,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -211,18 +212,18 @@ public class CloudCredentialController {
 
             log.info("DigitalOcean credential {} created successfully for user {}",
                     credential.credentialId(), userId);
-            return credential;
+            return ResponseEntity.ok(credential);
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to connect DigitalOcean account for user {}: {}", userId, e.getMessage());
-            throw new IllegalArgumentException("Failed to connect DigitalOcean account: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @MutationMapping
+    @PostMapping("/{id}/validate")
     @PreAuthorize("isAuthenticated()")
-    public ValidationResultDTO validateCredential(
-            @Argument String id,
+    public ResponseEntity<ValidationResultDTO> validateCredential(
+            @PathVariable String id,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -237,19 +238,19 @@ public class CloudCredentialController {
             log.info("Credential {} validation result: {} - {}",
                     credentialId, result.valid() ? "SUCCESS" : "FAILED", result.message());
 
-            return new ValidationResultDTO(result.valid(), result.message());
+            return ResponseEntity.ok(new ValidationResultDTO(result.valid(), result.message()));
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to validate credential {} for user {}: {}",
                     credentialId, userId, e.getMessage());
-            throw new IllegalArgumentException("Failed to validate credential: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @MutationMapping
+    @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public boolean deleteCredential(
-            @Argument String id,
+    public ResponseEntity<Void> deleteCredential(
+            @PathVariable String id,
             Authentication authentication) {
 
         UUID userId = getUserId(authentication);
@@ -261,12 +262,14 @@ public class CloudCredentialController {
         try {
             credentialService.deleteCredential(credentialId, userId);
             log.info("Credential {} deleted successfully by user {}", credentialId, userId);
-            return true;
+
+            auditService.logCredentialDeletion(userId, credentialId);
+            return ResponseEntity.ok().build();
 
         } catch (IllegalArgumentException e) {
             log.error("Failed to delete credential {} for user {}: {}",
                     credentialId, userId, e.getMessage());
-            return false;
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -305,4 +308,3 @@ public class CloudCredentialController {
         }
     }
 }
-

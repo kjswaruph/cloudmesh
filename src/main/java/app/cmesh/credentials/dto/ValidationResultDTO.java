@@ -1,4 +1,4 @@
-package app.cmesh.credentials.graphql;
+package app.cmesh.credentials.dto;
 
 
 public record ValidationResultDTO(

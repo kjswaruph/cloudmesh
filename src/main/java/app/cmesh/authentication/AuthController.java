@@ -54,8 +54,7 @@ public class AuthController {
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
-            );
+                    new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password()));
 
             final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             final String jwt = jwtUtils.generateToken(userDetails.getUsername());
@@ -65,8 +64,7 @@ public class AuthController {
             log.info("User logged in successfully: {}", authRequest.username());
             return ResponseEntity.ok(Map.of(
                     "message", "Login successful",
-                    "username", userDetails.getUsername()
-            ));
+                    "username", userDetails.getUsername()));
         } catch (BadCredentialsException e) {
             log.warn("Failed login attempt for username: {}", authRequest.username());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -86,8 +84,7 @@ public class AuthController {
                     signupRequest.lastName(),
                     signupRequest.email(),
                     signupRequest.username(),
-                    signupRequest.password()
-            );
+                    signupRequest.password());
 
             // Auto-login after signup
             final String jwt = jwtUtils.generateToken(user.getUsername());
@@ -97,8 +94,7 @@ public class AuthController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "message", "Registration successful",
-                    "username", user.getUsername()
-            ));
+                    "username", user.getUsername()));
         } catch (IllegalArgumentException e) {
             log.warn("Registration failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -129,6 +125,11 @@ public class AuthController {
         return map;
     }
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong");
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response, Authentication authentication) {
         try {
@@ -147,8 +148,7 @@ public class AuthController {
             log.info("User logged out successfully: {}", username);
             return ResponseEntity.ok(Map.of(
                     "message", "Logged out successfully",
-                    "success", true
-            ));
+                    "success", true));
 
         } catch (Exception e) {
             log.error("Error during logout: {}", e.getMessage(), e);
@@ -157,4 +157,3 @@ public class AuthController {
         }
     }
 }
-

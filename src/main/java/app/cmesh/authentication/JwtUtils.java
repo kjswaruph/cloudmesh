@@ -49,20 +49,6 @@ public class JwtUtils {
     }
 
     public void setJwtCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie(cookieName, token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(cookieSecure);
-        cookie.setPath("/");
-        cookie.setMaxAge(cookieExpiration);
-
-        // Don't set domain to allow cookie to work across localhost and internal container names
-        // Only set domain if explicitly configured and not empty
-        if (cookieDomain != null && !cookieDomain.isBlank() && !cookieDomain.equals("localhost")) {
-            cookie.setDomain(cookieDomain);
-        }
-
-        response.addCookie(cookie);
-
         // Build Set-Cookie header with SameSite attribute
         StringBuilder cookieHeader = new StringBuilder();
         cookieHeader.append(cookieName).append("=").append(token)
@@ -78,7 +64,7 @@ public class JwtUtils {
         cookieHeader.append("; SameSite=Lax");
 
         // Set the complete cookie header
-        response.setHeader("Set-Cookie", cookieHeader.toString());
+        response.addHeader("Set-Cookie", cookieHeader.toString());
 
         log.debug("JWT cookie set: name={}, maxAge={}, secure={}, httpOnly=true, sameSite=Lax",
                 cookieName, cookieExpiration, cookieSecure);

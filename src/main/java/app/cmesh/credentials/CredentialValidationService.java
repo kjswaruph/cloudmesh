@@ -1,4 +1,4 @@
-package app.cmesh.credentials.validation;
+package app.cmesh.credentials;
 
 import app.cmesh.credentials.ValidationResult;
 import app.cmesh.dashboard.enums.CloudProvider;
