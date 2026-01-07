@@ -44,10 +44,12 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://db:5432/${DB_NAME}
       - SPRING_PROFILES_ACTIVE=docker
-      - OAUTH2_REDIRECT_BASE_URL=http://localhost:8080
-      - APP_FRONTEND_URL=http://localhost:3000
-    ports:
-      - "8081:8081"
+      - OAUTH2_REDIRECT_BASE_URL=https://cmesh.swaruph.tech
+      - APP_FRONTEND_URL=https://cmesh.swaruph.tech
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
+      - JWT_COOKIE_SECURE=true
+      - JWT_COOKIE_DOMAIN=cmesh.swaruph.tech
+    # The backend is only accessed by the gateway via the Docker network; do not publish externally
     volumes:
       - ./logs:/app/logs
       - ./build/resources/main/cloudmesh-471922-831b704d3b73.json:/app/cloudmesh-471922-831b704d3b73.json:ro
@@ -77,8 +79,9 @@ services:
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-changeme}
       - JWT_SECRET=${JWT_SECRET}
       - JAVA_OPTS=${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0}
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./logs/gateway:/app/logs
     depends_on:
@@ -87,7 +90,6 @@ services:
       backend:
         condition: service_healthy
 
-    # Health check (uses Dockerfile HEALTHCHECK)
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
@@ -105,7 +107,7 @@ services:
       args:
         - API_URL=http://gateway:8080
         - NEXT_PUBLIC_API_URL=
-        - NEXT_PUBLIC_API_BASE=
+        - NEXT_PUBLIC_API_BASE=https://cmesh.swaruph.tech
         - NEXT_PUBLIC_GATEWAY_URL=
     container_name: cloudmesh-frontend
     env_file: ./frontend/.env
@@ -113,7 +115,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - NEXT_PUBLIC_API_URL=
-      - NEXT_PUBLIC_API_BASE=
+      - NEXT_PUBLIC_API_BASE=https://cmesh.swaruph.tech
       - NEXT_PUBLIC_GATEWAY_URL=
       - API_URL=http://gateway:8080
     ports:
