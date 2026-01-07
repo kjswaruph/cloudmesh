@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,82 +73,41 @@ export function ResourceTable() {
 
   useEffect(() => {
     const fetchResources = async () => {
-      // TODO(graphql): Replace this REST fetch + mock fallback with a GraphQL query once
-      // the backend exposes a 'resources' query. Until then we only mock data here.
       try {
-        // TODO: Replace with actual backend API endpoint
-        const response = await fetch('/api/dashboard/resources', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`, // TODO: Use proper auth context
-          },
-        });
-
-        if (response.status === 401) {
-          setError('Unauthorized access. Please log in.');
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch resources');
-        }
-
-        const data = await response.json();
-        setResources(data);
+        // Fetch all projects and their resources
+        const projects = await api.projects.list();
+        
+        const allResources: CloudResource[] = [];
+        
+        // Fetch resources for each project in parallel
+        await Promise.all(
+          projects.map(async (project: any) => {
+            try {
+              const projectResources = await api.projects.getResources(project.id);
+              
+              // Transform backend resource format to component format
+              const transformedResources = projectResources.map((resource: any) => ({
+                id: resource.id || resource.resourceId,
+                name: resource.name || resource.resourceName || 'Unnamed Resource',
+                type: resource.type || resource.resourceType || 'Unknown',
+                provider: resource.provider || 'Unknown',
+                region: resource.region || 'N/A',
+                status: (resource.status?.toLowerCase() || 'unknown') as "running" | "stopped" | "error" | "pending",
+                cost: resource.monthlyCost || resource.cost || 0,
+                lastUpdated: resource.lastUpdated || resource.updatedAt || new Date().toISOString(),
+              }));
+              
+              allResources.push(...transformedResources);
+            } catch (err) {
+              console.warn(`Failed to fetch resources for project ${project.id}:`, err);
+            }
+          })
+        );
+        
+        setResources(allResources);
       } catch (err) {
         console.error('Error fetching resources:', err);
-        // TODO: Mock data for development - remove in production
-        setResources([
-          {
-            id: "i-1234567890abcdef0",
-            name: "web-server-01",
-            type: "EC2 Instance",
-            provider: "AWS",
-            region: "us-east-1",
-            status: "running",
-            cost: 145.20,
-            lastUpdated: "2024-01-15T10:30:00Z",
-          },
-          {
-            id: "vm-9876543210",
-            name: "database-vm",
-            type: "Virtual Machine",
-            provider: "Azure",
-            region: "eastus",
-            status: "running",
-            cost: 289.50,
-            lastUpdated: "2024-01-15T09:45:00Z",
-          },
-          {
-            id: "instance-5555555555",
-            name: "analytics-server",
-            type: "Compute Engine",
-            provider: "GCP",
-            region: "us-central1",
-            status: "stopped",
-            cost: 0.00,
-            lastUpdated: "2024-01-14T18:20:00Z",
-          },
-          {
-            id: "i-abcdef1234567890",
-            name: "api-gateway",
-            type: "EC2 Instance",
-            provider: "AWS",
-            region: "us-west-2",
-            status: "running",
-            cost: 89.75,
-            lastUpdated: "2024-01-15T11:15:00Z",
-          },
-          {
-            id: "vm-1111111111",
-            name: "cache-server",
-            type: "Virtual Machine",
-            provider: "Azure",
-            region: "westeurope",
-            status: "error",
-            cost: 0.00,
-            lastUpdated: "2024-01-15T08:30:00Z",
-          },
-        ]);
+        setError(err instanceof Error ? err.message : 'Failed to load resources');
       } finally {
         setLoading(false);
       }
@@ -157,23 +117,10 @@ export function ResourceTable() {
   }, []);
 
   const handleResourceAction = async (resourceId: string, action: string) => {
-    try {
-      // TODO: Implement actual resource management API calls
-      const response = await fetch(`/api/resources/${resourceId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        // TODO: Refresh the resources list or update the specific resource
-        console.log(`${action} action performed on resource ${resourceId}`);
-      }
-    } catch (err) {
-      console.error(`Error performing ${action} on resource:`, err);
-    }
+    // TODO: Resource lifecycle management (start/stop/delete) requires backend implementation
+    // These endpoints are not yet available in the API
+    console.warn(`Resource action '${action}' on ${resourceId} - Backend API pending`);
+    alert(`Resource management actions are not yet implemented in the backend API.\nAction: ${action}\nResource: ${resourceId}`);
   };
 
   const filteredResources = resources.filter((resource) => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api-client";
 import {
   Sidebar,
   SidebarContent,
@@ -67,7 +68,7 @@ const primaryMenuItems = [
   },
   {
     title: "Projects",
-    url: "/dashboard/projects",
+    url: "/projects",
     icon: FolderOpen,
   },
   {
@@ -79,11 +80,6 @@ const primaryMenuItems = [
     title: "Billing",
     url: "/dashboard/billing",
     icon: CreditCard,
-  },
-  {
-    title: "Monitoring",
-    url: "/dashboard/monitoring",
-    icon: Activity,
   },
   {
     title: "Cloud Providers",
@@ -111,8 +107,21 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await api.auth.me();
+        setUser(userData);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const fetchCsrf = async (): Promise<string | null> => {
     try {
@@ -210,12 +219,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           <div className="flex items-center gap-3 w-full">
                             <Avatar className="h-10 w-10">
                               <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                                JD
+                                {user?.username?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col items-start overflow-hidden">
-                              <span className="text-sm font-medium truncate">John Doe</span>
-                              <span className="text-xs text-muted-foreground truncate">john.doe@company.com</span>
+                              <span className="text-sm font-medium truncate">{user?.username || user?.email || "User"}</span>
+                              <span className="text-xs text-muted-foreground truncate">{user?.email || "Loading..."}</span>
                             </div>
                           </div>
                         </SidebarMenuButton>
@@ -224,12 +233,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <div className="flex items-center gap-3 p-3 border-b">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                              JD
+                              {user?.username?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "U"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
-                            <span className="font-medium">John Doe</span>
-                            <span className="text-sm text-muted-foreground">john.doe@company.com</span>
+                            <span className="font-medium">{user?.username || user?.email || "User"}</span>
+                            <span className="text-sm text-muted-foreground">{user?.email || "Loading..."}</span>
                           </div>
                         </div>
                         <div className="py-2">
@@ -336,7 +345,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>

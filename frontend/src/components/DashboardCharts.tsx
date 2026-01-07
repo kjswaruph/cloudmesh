@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,54 +66,88 @@ export function DashboardCharts() {
 
   useEffect(() => {
     const fetchChartData = async () => {
-      // TODO(graphql): Replace with a GraphQL query (e.g., dashboardCharts) once backend provides it.
-      // For now this uses mock data to drive chart visuals.
       try {
-        // TODO: Replace with actual backend API endpoint
-        const response = await fetch('/api/dashboard/charts', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`, // TODO: Use proper auth context
-          },
+        const credentials = await api.credentials.list();
+        
+        // Get last 6 months of data
+        const endDate = new Date();
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(endDate);
+          date.setMonth(date.getMonth() - i);
+          months.push({
+            month: date.toLocaleDateString('en-US', { month: 'short' }),
+            startDate: new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0],
+            endDate: new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0]
+          });
+        }
+
+        // Fetch cost trends for all credentials by month
+        const billingTrends = await Promise.all(
+          months.map(async ({ month, startDate, endDate }) => {
+            const monthData: any = { month, aws: 0, azure: 0, gcp: 0, total: 0 };
+            
+            await Promise.all(
+              credentials.map(async (cred: any) => {
+                try {
+                  const costData = await api.costs.getCredentialCosts(cred.id, startDate, endDate);
+                  const provider = (cred.provider || 'unknown').toLowerCase();
+                  const cost = costData.totalCost || 0;
+                  
+                  if (provider === 'aws' || provider === 'azure' || provider === 'gcp') {
+                    monthData[provider] += cost;
+                  }
+                  monthData.total += cost;
+                } catch (err) {
+                  console.warn(`Failed to fetch cost for ${cred.id}:`, err);
+                }
+              })
+            );
+            
+            return monthData;
+          })
+        );
+
+        // Calculate resource distribution by provider
+        const providerResources = new Map<string, number>();
+        credentials.forEach((cred: any) => {
+          const provider = cred.provider || 'Unknown';
+          const count = cred.resourceCount || 0;
+          providerResources.set(provider, (providerResources.get(provider) || 0) + count);
         });
 
-        if (response.status === 401) {
-          setError('Unauthorized access. Please log in.');
-          return;
-        }
+        const providerColors: Record<string, string> = {
+          AWS: '#FF9900',
+          Azure: '#0078D4',
+          GCP: '#4285F4',
+          DigitalOcean: '#0080FF'
+        };
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch chart data');
-        }
+        const resourceDistribution = Array.from(providerResources.entries()).map(([provider, resources]) => ({
+          provider,
+          resources,
+          color: providerColors[provider] || '#888888'
+        }));
 
-        const data = await response.json();
-        setChartData(data);
+        // TODO: Performance metrics require backend health/monitoring endpoints
+        const performanceMetrics = [
+          { date: "Mon", uptime: 99.9, responseTime: 120, errors: 2 },
+          { date: "Tue", uptime: 99.8, responseTime: 135, errors: 5 },
+          { date: "Wed", uptime: 100, responseTime: 110, errors: 0 },
+          { date: "Thu", uptime: 99.7, responseTime: 150, errors: 8 },
+          { date: "Fri", uptime: 99.9, responseTime: 125, errors: 3 },
+          { date: "Sat", uptime: 100, responseTime: 105, errors: 1 },
+          { date: "Sun", uptime: 99.8, responseTime: 130, errors: 4 },
+        ];
+
+        setChartData({
+          billingTrends,
+          resourceDistribution,
+          performanceMetrics
+        });
       } catch (err) {
         console.error('Error fetching chart data:', err);
-        // TODO: Mock data for development - remove in production
-        setChartData({
-          billingTrends: [
-            { month: "Jan", aws: 1200, azure: 800, gcp: 600, total: 2600 },
-            { month: "Feb", aws: 1350, azure: 950, gcp: 650, total: 2950 },
-            { month: "Mar", aws: 1100, azure: 1200, gcp: 700, total: 3000 },
-            { month: "Apr", aws: 1450, azure: 1100, gcp: 800, total: 3350 },
-            { month: "May", aws: 1600, azure: 1300, gcp: 750, total: 3650 },
-            { month: "Jun", aws: 1890, azure: 1650, gcp: 710, total: 4250 },
-          ],
-          resourceDistribution: [
-            { provider: "AWS", resources: 342, color: "#FF9900" },
-            { provider: "Azure", resources: 298, color: "#0078D4" },
-            { provider: "GCP", resources: 207, color: "#4285F4" },
-          ],
-          performanceMetrics: [
-            { date: "Mon", uptime: 99.9, responseTime: 120, errors: 2 },
-            { date: "Tue", uptime: 99.8, responseTime: 135, errors: 5 },
-            { date: "Wed", uptime: 100, responseTime: 110, errors: 0 },
-            { date: "Thu", uptime: 99.7, responseTime: 150, errors: 8 },
-            { date: "Fri", uptime: 99.9, responseTime: 125, errors: 3 },
-            { date: "Sat", uptime: 100, responseTime: 105, errors: 1 },
-            { date: "Sun", uptime: 99.8, responseTime: 130, errors: 4 },
-          ],
-        });
+        setError(err instanceof Error ? err.message : 'Failed to load chart data');
       } finally {
         setLoading(false);
       }

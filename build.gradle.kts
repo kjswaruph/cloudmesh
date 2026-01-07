@@ -25,14 +25,12 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client") // Simplifying Auth
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-graphql")
-    implementation("org.springframework.boot:spring-boot-starter-aspectj")
 
     // Modules
     implementation(project(":cloudmesh-aws"))
@@ -47,17 +45,20 @@ dependencies {
 
     // Database
     runtimeOnly("org.postgresql:postgresql")
+    
+    // Metrics
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Utilities
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
     // Testing
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.testcontainers:postgresql:1.21.3")
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
-    testImplementation("org.springframework.graphql:spring-graphql-test")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

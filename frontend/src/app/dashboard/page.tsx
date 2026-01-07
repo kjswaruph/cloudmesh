@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardOverview } from "@/components/DashboardOverview";
-import { DashboardCharts } from "@/components/DashboardCharts";
-import { ResourceTable } from "@/components/ResourceTable";
-import { UsersPanel } from "../../components/UsersPanel";
+import api from "@/lib/api-client";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -16,18 +14,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/auth/me', {
-          credentials: 'include',
-          cache: 'no-store'
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.username) {
-            setIsAuthenticated(true);
-          } else {
-            router.replace('/login?redirect=/dashboard');
-          }
+        const data = await api.auth.me();
+        if (data && (data.username || data.user)) {
+          setIsAuthenticated(true);
         } else {
           router.replace('/login?redirect=/dashboard');
         }
@@ -67,26 +56,7 @@ export default function DashboardPage() {
           </p>
         </div>
         
-  {/* Overview Cards (currently mock data until backend provides GraphQL) */}
         <DashboardOverview />
-        
-        {/* Charts Section (mock data + TODO placeholder) */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Analytics</h3>
-          <DashboardCharts />
-        </div>
-        
-        {/* Resources Table (mock data + TODO placeholder) */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Resource Management</h3>
-          <ResourceTable />
-        </div>
-
-        {/* Users managed purely via existing GraphQL operations */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Users</h3>
-          <UsersPanel />
-        </div>
       </div>
     </DashboardLayout>
   );
