@@ -1,53 +1,76 @@
 server:
-  port: 8081
+  port: 8080 # Gateway Port (User accesses this)
 
 spring:
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      host: ${SPRING_DATA_REDIS_HOST:redis}
       port: ${SPRING_DATA_REDIS_PORT:6379}
   application:
     name: cloudmesh-gateway
   cloud:
     gateway:
-      server:
-        webflux:
-          routes:
-            - id: oauth2-authorization
-              uri: ${SPRING_CLOUD_GATEWAY_ROUTES_0_URI:http://localhost:8080}
-              predicates:
-                - Path=/oauth2/**
-              filters:
-                - StripPrefix=0
-            - id: oauth2-login
-              uri: ${SPRING_CLOUD_GATEWAY_ROUTES_1_URI:http://localhost:8080}
-              predicates:
-                - Path=/login/oauth2/**
-              filters:
-                - StripPrefix=0
-            - id: auth
-              uri: http://backend:8080
-              predicates:
-                - Path=/auth/**
-              filters:
-                - StripPrefix=0
-            - id: graphql
-              uri: http://backend:8080
-              predicates:
-                - Path=/graphql
-              filters:
-                - StripPrefix=0
-            - id: hello-service
-              uri: http://backend:8080
-              predicates:
-                - Path=/hello/**
-              filters:
-                - name: RequestRateLimiter
-                  args:
-                    key-resolver: "#{@userKeyResolver}"
-                    redis-rate-limiter.replenishRate: 20
-                    redis-rate-limiter.burstCapacity: 50
-                    redis-rate-limiter.requestedTokens: 1
+      routes:
+        # Auth Controller
+        - id: auth-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/auth/**
+
+        # Project Controller
+        - id: project-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/api/projects/**
+
+        # Cloud Credential Controller
+        - id: credential-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/api/credentials/**
+
+        # Cost Controller
+        - id: cost-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/api/costs/**
+
+        # User Controller
+        - id: user-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/api/users/**
+
+        # Hello Controller
+        - id: hello-service
+          uri: http://backend:8081
+          predicates:
+            - Path=/hello
+
+        # Home Controller (Redirects)
+        - id: home-redirect
+          uri: http://backend:8081
+          predicates:
+            - Path=/,/login,/signup
+
+        # OAuth Endpoints
+        - id: oauth2-login
+          uri: http://backend:8081
+          predicates:
+            - Path=/oauth2/**
+
+        - id: oauth2-redirect
+          uri: http://backend:8081
+          predicates:
+            - Path=/login/oauth2/**
+
+        # Catch-all for debugging
+        - id: catch-all
+          uri: http://backend:8081
+          predicates:
+            - Path=/**
+        # Optional: Proxy root or other static resources if backend serves them, but Frontend connects to Gateway API.
+
 jwt:
   secret: ${JWT_SECRET}
 
@@ -55,7 +78,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,gateway
   endpoint:
     health:
       show-details: always
@@ -63,4 +86,4 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
-    org.springframework.data.redis: DEBUG
+    org.springframework.data.redis: INFO
