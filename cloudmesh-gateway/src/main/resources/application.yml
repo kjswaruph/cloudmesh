@@ -1,5 +1,6 @@
 server:
-  port: 8080 # Gateway Port (User accesses this)
+  port: 8080
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:framework}
 
 spring:
   data:
