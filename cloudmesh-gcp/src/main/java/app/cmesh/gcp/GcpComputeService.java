@@ -25,7 +25,8 @@ public class GcpComputeService {
                     .build();
 
             List<String> names = new ArrayList<>();
-            for(var entry : client.aggregatedList(request).iterateAll()) {
+            // iterateAll() automatically handles pagination
+            for (var entry : client.aggregatedList(request).iterateAll()) {
                 if (entry.getValue() != null && entry.getValue().getInstancesList() != null) {
                     for (Instance instance : entry.getValue().getInstancesList()) {
                         names.add(instance.getName());

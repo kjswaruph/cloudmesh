@@ -7,12 +7,15 @@ import app.cmesh.dashboard.CloudCredentials.CredentialStatus;
 import app.cmesh.dashboard.enums.CloudProvider;
 import app.cmesh.user.User;
 import app.cmesh.user.UserRepository;
+import app.cmesh.credentials.dto.ValidationResultDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -26,368 +29,380 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
 class CloudCredentialControllerTest {
 
-    @Mock
-    private CloudCredentialService credentialService;
+        @Mock
+        private CloudCredentialService credentialService;
 
-    @Mock
-    private UserRepository userRepository;
+        @Mock
+        private UserRepository userRepository;
 
-    @Mock
-    private Authentication authentication;
+        @Mock
+        private Authentication authentication;
 
-    @Mock
-    private UserDetails userDetails;
+        @Mock
+        private UserDetails userDetails;
 
-    @InjectMocks
-    private CloudCredentialController controller;
+        @InjectMocks
+        private CloudCredentialController controller;
 
-    private UUID testUserId;
-    private UUID testCredentialId;
-    private User testUser;
-    private CloudCredentialDTO testCredential;
+        private UUID testUserId;
+        private UUID testCredentialId;
+        private User testUser;
+        private CloudCredentialDTO testCredential;
 
-    @BeforeEach
-    void setUp() {
-        testUserId = UUID.randomUUID();
-        testCredentialId = UUID.randomUUID();
+        @BeforeEach
+        void setUp() {
+                testUserId = UUID.randomUUID();
+                testCredentialId = UUID.randomUUID();
 
-        testUser = new User();
-        testUser.setUserId(testUserId);
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
+                testUser = new User();
+                testUser.setUserId(testUserId);
+                testUser.setUsername("testuser");
+                testUser.setEmail("test@example.com");
 
-        testCredential = new CloudCredentialDTO(
-                testCredentialId,
-                CloudProvider.AWS,
-                "Test AWS Account",
-                CredentialStatus.ACTIVE,
-                "us-east-1",
-                Instant.now(),
-                Instant.now(),
-                Instant.now()
-        );
-    }
+                testCredential = new CloudCredentialDTO(
+                                testCredentialId,
+                                CloudProvider.AWS,
+                                "Test AWS Account",
+                                CredentialStatus.ACTIVE,
+                                "us-east-1",
+                                Instant.now(),
+                                Instant.now(),
+                                Instant.now());
+        }
 
-    // ==================== QUERY TESTS ====================
+        // ==================== QUERY TESTS ====================
 
-    @Test
-    void testCloudCredentials_ListAll() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.listCredentials(testUserId)).thenReturn(Arrays.asList(testCredential));
+        @Test
+        void testCloudCredentials_ListAll() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.listCredentials(testUserId)).thenReturn(Arrays.asList(testCredential));
 
-        // Act
-        List<CloudCredentialDTO> result = controller.cloudCredentials(null, authentication);
+                // Act
+                List<CloudCredentialDTO> result = controller.cloudCredentials(null, authentication);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testCredentialId, result.get(0).credentialId());
-        verify(credentialService).listCredentials(testUserId);
-    }
+                // Assert
+                assertNotNull(result);
+                assertEquals(1, result.size());
+                assertEquals(testCredentialId, result.get(0).credentialId());
+                verify(credentialService).listCredentials(testUserId);
+        }
 
-    @Test
-    void testCloudCredentials_FilterByProvider() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.listCredentialsByProvider(testUserId, CloudProvider.AWS))
-                .thenReturn(Arrays.asList(testCredential));
+        @Test
+        void testCloudCredentials_FilterByProvider() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.listCredentialsByProvider(testUserId, CloudProvider.AWS))
+                                .thenReturn(Arrays.asList(testCredential));
 
-        // Act
-        List<CloudCredentialDTO> result = controller.cloudCredentials(CloudProvider.AWS, authentication);
+                // Act
+                List<CloudCredentialDTO> result = controller.cloudCredentials(CloudProvider.AWS, authentication);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(CloudProvider.AWS, result.get(0).provider());
-        verify(credentialService).listCredentialsByProvider(testUserId, CloudProvider.AWS);
-    }
+                // Assert
+                assertNotNull(result);
+                assertEquals(1, result.size());
+                assertEquals(CloudProvider.AWS, result.get(0).provider());
+                verify(credentialService).listCredentialsByProvider(testUserId, CloudProvider.AWS);
+        }
 
-    @Test
-    void testCloudCredential_Success() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.getCredential(testCredentialId, testUserId))
-                .thenReturn(Optional.of(testCredential));
+        @Test
+        void testCloudCredential_Success() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.getCredential(testCredentialId, testUserId))
+                                .thenReturn(Optional.of(testCredential));
 
-        // Act
-        CloudCredentialDTO result = controller.cloudCredential(testCredentialId.toString(), authentication);
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.cloudCredential(testCredentialId.toString(),
+                                authentication);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(testCredentialId, result.credentialId());
-        verify(credentialService).getCredential(testCredentialId, testUserId);
-    }
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+                assertEquals(testCredentialId, response.getBody().credentialId());
+                verify(credentialService).getCredential(testCredentialId, testUserId);
+        }
 
-    @Test
-    void testCloudCredential_NotFound() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.getCredential(testCredentialId, testUserId))
-                .thenReturn(Optional.empty());
+        @Test
+        void testCloudCredential_NotFound() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.getCredential(testCredentialId, testUserId))
+                                .thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () ->
-                controller.cloudCredential(testCredentialId.toString(), authentication)
-        );
-    }
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.cloudCredential(testCredentialId.toString(),
+                                authentication);
 
-    // ==================== MUTATION TESTS - AWS ====================
+                // Assert
+                assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        }
 
-    @Test
-    void testConnectAwsAccount_Success() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.AWS), anyString(), anyMap(), eq(true)))
-                .thenReturn(testCredential);
+        // ==================== MUTATION TESTS - AWS ====================
 
-        // Create valid AWS input using a mock implementation
-        var awsInput = new app.cmesh.credentials.graphql.AwsCredentialInput(
-                "Test AWS",
-                "arn:aws:iam::123456789012:role/TestRole",
-                "external-id-123",
-                "us-east-1"
-        );
+        @Test
+        void testConnectAwsAccount_Success() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.AWS), anyString(), anyMap(),
+                                eq(true)))
+                                .thenReturn(testCredential);
 
-        // Act
-        CloudCredentialDTO result = controller.connectAwsAccount(awsInput, authentication);
+                // Create valid AWS input using a mock implementation
+                var awsInput = new app.cmesh.credentials.graphql.AwsCredentialInput(
+                                "Test AWS",
+                                "arn:aws:iam::123456789012:role/TestRole",
+                                "external-id-123",
+                                "us-east-1");
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(CloudProvider.AWS, result.provider());
-        verify(credentialService).createCredential(eq(testUserId), eq(CloudProvider.AWS), anyString(), anyMap(), eq(true));
-    }
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.connectAwsAccount(awsInput, authentication);
 
-    // ==================== MUTATION TESTS - GCP ====================
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+                assertEquals(CloudProvider.AWS, response.getBody().provider());
+                verify(credentialService).createCredential(eq(testUserId), eq(CloudProvider.AWS), anyString(), anyMap(),
+                                eq(true));
+        }
 
-    @Test
-    void testConnectGcpAccount_Success() {
-        // Arrange
-        CloudCredentialDTO gcpCredential = new CloudCredentialDTO(
-                UUID.randomUUID(),
-                CloudProvider.GCP,
-                "Test GCP Account",
-                CredentialStatus.ACTIVE,
-                "us-central1",
-                Instant.now(),
-                Instant.now(),
-                Instant.now()
-        );
+        // ==================== MUTATION TESTS - GCP ====================
 
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.GCP), anyString(), anyMap(), eq(true)))
-                .thenReturn(gcpCredential);
+        @Test
+        void testConnectGcpAccount_Success() {
+                // Arrange
+                CloudCredentialDTO gcpCredential = new CloudCredentialDTO(
+                                UUID.randomUUID(),
+                                CloudProvider.GCP,
+                                "Test GCP Account",
+                                CredentialStatus.ACTIVE,
+                                "us-central1",
+                                Instant.now(),
+                                Instant.now(),
+                                Instant.now());
 
-        var gcpInput = new app.cmesh.credentials.graphql.GcpCredentialInput(
-                "Test GCP",
-                "{\"type\":\"service_account\"}",
-                "my-project",
-                "us-central1"
-        );
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.GCP), anyString(), anyMap(),
+                                eq(true)))
+                                .thenReturn(gcpCredential);
 
-        // Act
-        CloudCredentialDTO result = controller.connectGcpAccount(gcpInput, authentication);
+                var gcpInput = new app.cmesh.credentials.graphql.GcpCredentialInput(
+                                "Test GCP",
+                                "{\"type\":\"service_account\"}",
+                                "my-project",
+                                "us-central1");
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(CloudProvider.GCP, result.provider());
-    }
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.connectGcpAccount(gcpInput, authentication);
 
-    // ==================== MUTATION TESTS - Azure ====================
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(CloudProvider.GCP, response.getBody().provider());
+        }
 
-    @Test
-    void testConnectAzureAccount_Success() {
-        // Arrange
-        CloudCredentialDTO azureCredential = new CloudCredentialDTO(
-                UUID.randomUUID(),
-                CloudProvider.AZURE,
-                "Test Azure Account",
-                CredentialStatus.ACTIVE,
-                "eastus",
-                Instant.now(),
-                Instant.now(),
-                Instant.now()
-        );
+        // ==================== MUTATION TESTS - Azure ====================
 
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.AZURE), anyString(), anyMap(), eq(true)))
-                .thenReturn(azureCredential);
+        @Test
+        void testConnectAzureAccount_Success() {
+                // Arrange
+                CloudCredentialDTO azureCredential = new CloudCredentialDTO(
+                                UUID.randomUUID(),
+                                CloudProvider.AZURE,
+                                "Test Azure Account",
+                                CredentialStatus.ACTIVE,
+                                "eastus",
+                                Instant.now(),
+                                Instant.now(),
+                                Instant.now());
 
-        var azureInput = new app.cmesh.credentials.graphql.AzureCredentialInput(
-                "Test Azure",
-                "12345678-1234-1234-1234-123456789012",
-                "client-secret",
-                "12345678-1234-1234-1234-123456789012",
-                "12345678-1234-1234-1234-123456789012",
-                "eastus"
-        );
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.AZURE), anyString(), anyMap(),
+                                eq(true)))
+                                .thenReturn(azureCredential);
 
-        // Act
-        CloudCredentialDTO result = controller.connectAzureAccount(azureInput, authentication);
+                var azureInput = new app.cmesh.credentials.graphql.AzureCredentialInput(
+                                "Test Azure",
+                                "12345678-1234-1234-1234-123456789012",
+                                "client-secret",
+                                "12345678-1234-1234-1234-123456789012",
+                                "12345678-1234-1234-1234-123456789012",
+                                "eastus");
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(CloudProvider.AZURE, result.provider());
-    }
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.connectAzureAccount(azureInput,
+                                authentication);
 
-    // ==================== MUTATION TESTS - DigitalOcean ====================
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(CloudProvider.AZURE, response.getBody().provider());
+        }
 
-    @Test
-    void testConnectDigitalOceanAccount_Success() {
-        // Arrange
-        CloudCredentialDTO doCredential = new CloudCredentialDTO(
-                UUID.randomUUID(),
-                CloudProvider.DIGITALOCEAN,
-                "Test DO Account",
-                CredentialStatus.ACTIVE,
-                "nyc3",
-                Instant.now(),
-                Instant.now(),
-                Instant.now()
-        );
+        // ==================== MUTATION TESTS - DigitalOcean ====================
 
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.DIGITALOCEAN), anyString(), anyMap(), eq(true)))
-                .thenReturn(doCredential);
+        @Test
+        void testConnectDigitalOceanAccount_Success() {
+                // Arrange
+                CloudCredentialDTO doCredential = new CloudCredentialDTO(
+                                UUID.randomUUID(),
+                                CloudProvider.DIGITALOCEAN,
+                                "Test DO Account",
+                                CredentialStatus.ACTIVE,
+                                "nyc3",
+                                Instant.now(),
+                                Instant.now(),
+                                Instant.now());
 
-        var doInput = new app.cmesh.credentials.graphql.DigitalOceanCredentialInput(
-                "Test DO",
-                "a".repeat(64), // Valid token length
-                "nyc3"
-        );
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.createCredential(eq(testUserId), eq(CloudProvider.DIGITALOCEAN), anyString(),
+                                anyMap(), eq(true)))
+                                .thenReturn(doCredential);
 
-        // Act
-        CloudCredentialDTO result = controller.connectDigitalOceanAccount(doInput, authentication);
+                var doInput = new app.cmesh.credentials.graphql.DigitalOceanCredentialInput(
+                                "Test DO",
+                                "a".repeat(64), // Valid token length
+                                "nyc3");
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(CloudProvider.DIGITALOCEAN, result.provider());
-    }
+                // Act
+                ResponseEntity<CloudCredentialDTO> response = controller.connectDigitalOceanAccount(doInput,
+                                authentication);
 
-    // ==================== MUTATION TESTS - Credential Management ====================
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertEquals(CloudProvider.DIGITALOCEAN, response.getBody().provider());
+        }
 
-    @Test
-    void testValidateCredential_Success() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.validateCredential(testCredentialId, testUserId))
-                .thenReturn(ValidationResult.success("Validation successful"));
+        // ==================== MUTATION TESTS - Credential Management
+        // ====================
 
-        // Act
-        var result = controller.validateCredential(testCredentialId.toString(), authentication);
+        @Test
+        void testValidateCredential_Success() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.validateCredential(testCredentialId, testUserId))
+                                .thenReturn(ValidationResult.success("Validation successful"));
 
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.valid());
-        assertEquals("Validation successful", result.message());
-    }
+                // Act
+                ResponseEntity<ValidationResultDTO> response = controller
+                                .validateCredential(testCredentialId.toString(), authentication);
 
-    @Test
-    void testValidateCredential_Failed() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        when(credentialService.validateCredential(testCredentialId, testUserId))
-                .thenReturn(ValidationResult.failure("Invalid credentials"));
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+                assertTrue(response.getBody().valid());
+                assertEquals("Validation successful", response.getBody().message());
+        }
 
-        // Act
-        var result = controller.validateCredential(testCredentialId.toString(), authentication);
+        @Test
+        void testValidateCredential_Failed() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                when(credentialService.validateCredential(testCredentialId, testUserId))
+                                .thenReturn(ValidationResult.failure("Invalid credentials"));
 
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.valid());
-        assertEquals("Invalid credentials", result.message());
-    }
+                // Act
+                ResponseEntity<ValidationResultDTO> response = controller
+                                .validateCredential(testCredentialId.toString(), authentication);
 
-    @Test
-    void testDeleteCredential_Success() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        doNothing().when(credentialService).deleteCredential(testCredentialId, testUserId);
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                assertNotNull(response.getBody());
+                assertFalse(response.getBody().valid());
+                assertEquals("Invalid credentials", response.getBody().message());
+        }
 
-        // Act
-        boolean result = controller.deleteCredential(testCredentialId.toString(), authentication);
+        @Test
+        void testDeleteCredential_Success() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                doNothing().when(credentialService).deleteCredential(testCredentialId, testUserId);
 
-        // Assert
-        assertTrue(result);
-        verify(credentialService).deleteCredential(testCredentialId, testUserId);
-    }
+                // Act
+                ResponseEntity<Void> response = controller.deleteCredential(testCredentialId.toString(),
+                                authentication);
 
-    @Test
-    void testDeleteCredential_Failed() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
-        doThrow(new IllegalArgumentException("Credential not found"))
-                .when(credentialService).deleteCredential(testCredentialId, testUserId);
+                // Assert
+                assertEquals(HttpStatus.OK, response.getStatusCode());
+                verify(credentialService).deleteCredential(testCredentialId, testUserId);
+        }
 
-        // Act
-        boolean result = controller.deleteCredential(testCredentialId.toString(), authentication);
+        @Test
+        void testDeleteCredential_Failed() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+                doThrow(new IllegalArgumentException("Credential not found"))
+                                .when(credentialService).deleteCredential(testCredentialId, testUserId);
 
-        // Assert
-        assertFalse(result);
-    }
+                // Act
+                ResponseEntity<Void> response = controller.deleteCredential(testCredentialId.toString(),
+                                authentication);
 
-    // ==================== EDGE CASES ====================
+                // Assert
+                assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        }
 
-    @Test
-    void testCloudCredential_InvalidUUID() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("testuser");
-        when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
+        // ==================== EDGE CASES ====================
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () ->
-                controller.cloudCredential("invalid-uuid", authentication)
-        );
-    }
+        @Test
+        void testCloudCredential_InvalidUUID() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("testuser");
+                when(userRepository.findUsersByUsername("testuser")).thenReturn(testUser);
 
-    @Test
-    void testGetUserId_UserNotFound() {
-        // Arrange
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("nonexistent");
-        when(userRepository.findUsersByUsername("nonexistent")).thenReturn(null);
+                // Act & Assert
+                // The parser helper throws IllegalArgumentException
+                assertThrows(IllegalArgumentException.class,
+                                () -> controller.cloudCredential("invalid-uuid", authentication));
+        }
 
-        // Act & Assert
-        assertThrows(IllegalStateException.class, () ->
-                controller.cloudCredentials(null, authentication)
-        );
-    }
+        @Test
+        void testGetUserId_UserNotFound() {
+                // Arrange
+                when(authentication.getPrincipal()).thenReturn(userDetails);
+                when(userDetails.getUsername()).thenReturn("nonexistent");
+                when(userRepository.findUsersByUsername("nonexistent")).thenReturn(null);
 
-    @Test
-    void testGetUserId_NullAuthentication() {
-        // Act & Assert
-        assertThrows(IllegalStateException.class, () ->
-                controller.cloudCredentials(null, null)
-        );
-    }
+                // Act & Assert
+                assertThrows(IllegalStateException.class, () -> controller.cloudCredentials(null, authentication));
+        }
+
+        @Test
+        void testGetUserId_NullAuthentication() {
+                // Act & Assert
+                assertThrows(IllegalStateException.class, () -> controller.cloudCredentials(null, null));
+        }
 }
-

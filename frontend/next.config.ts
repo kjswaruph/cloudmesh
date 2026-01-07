@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/auth/:path*", destination: `${apiUrl}/auth/:path*` },
-      { source: "/graphql", destination: `${apiUrl}/graphql` },
+      { source: "/api/:path*", destination: `${apiUrl}/api/:path*` },
       { source: "/logout", destination: `${apiUrl}/auth/logout` },
       { source: "/oauth2/:path*", destination: `${apiUrl}/oauth2/:path*` },
       { source: "/login/oauth2/:path*", destination: `${apiUrl}/login/oauth2/:path*` },

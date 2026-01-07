@@ -6,13 +6,13 @@ import app.cmesh.dashboard.enums.CloudProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.graphql.data.GraphQlRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@GraphQlRepository
+@Repository
 public interface CloudCredentialsRepository extends JpaRepository<CloudCredentials, UUID> {
 
     List<CloudCredentials> findByUser_UserId(UUID userId);
@@ -32,7 +32,10 @@ public interface CloudCredentialsRepository extends JpaRepository<CloudCredentia
     void deleteByCredentialIdAndUser_UserId(UUID credentialId, UUID userId);
 
     @Query("SELECT c FROM CloudCredentials c WHERE c.status = 'ACTIVE' AND " +
-           "(c.lastValidatedAt IS NULL OR c.lastValidatedAt < :beforeTime)")
+            "(c.lastValidatedAt IS NULL OR c.lastValidatedAt < :beforeTime)")
     List<CloudCredentials> findCredentialsNeedingValidation(@Param("beforeTime") java.time.Instant beforeTime);
-}
 
+    List<CloudCredentials> findByStatus(CredentialStatus status);
+
+    List<CloudCredentials> findByProviderAndStatus(CloudProvider provider, CredentialStatus status);
+}

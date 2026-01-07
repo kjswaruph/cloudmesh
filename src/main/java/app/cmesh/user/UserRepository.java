@@ -4,9 +4,9 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.springframework.graphql.data.GraphQlRepository;
+import org.springframework.stereotype.Repository;
 
-@GraphQlRepository
+@Repository
 public interface UserRepository extends JpaRepository<User, UUID>, QueryByExampleExecutor<User> {
     Optional<User> findUsersByEmail(String email);
 

@@ -12,11 +12,6 @@ import app.cmesh.docean.impl.RegionServiceImpl;
 import app.cmesh.docean.impl.SizeServiceImpl;
 import java.net.http.HttpClient;
 
-/// # DigitalOcean API Client
-/// This is the main client class for interacting with the DigitalOcean API.
-/// It provides access to various services such as Droplets, Regions, Sizes, and Images.
-/// @author Swaruph
-/// @version 1.0
 public final class DigitalOceanClient {
 
     private final DropletService dropletService;

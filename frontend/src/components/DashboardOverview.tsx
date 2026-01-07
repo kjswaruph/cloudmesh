@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { 
   Cloud, 
   DollarSign, 
@@ -12,24 +14,36 @@ import {
   Shield, 
   TrendingUp, 
   TrendingDown,
-  AlertTriangle 
+  AlertCircle,
+  Activity,
+  ExternalLink
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface CloudProvider {
   name: string;
+  credentialId: string;
   resources: number;
   cost: number;
   status: "healthy" | "warning" | "error";
-  usage: number;
+  region?: string;
 }
 
 interface DashboardStats {
   totalResources: number;
   totalCost: number;
   activeProviders: number;
-  securityScore: number;
+  activeProjects: number;
   providers: CloudProvider[];
 }
+
+const providerIcons: Record<string, string> = {
+  AWS: "/providers/aws.png",
+  GCP: "/providers/gcp.png",
+  Azure: "/providers/azure.png",
+  DigitalOcean: "/providers/do.png"
+};
 
 export function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -38,41 +52,77 @@ export function DashboardOverview() {
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
-      // TODO(graphql): Await backend implementation of a 'dashboardStats' GraphQL query.
-      // This component currently uses mock data (see catch) to visualize layout.
       try {
-        // TODO: Replace with actual backend API endpoint
-        const response = await fetch('/api/dashboard/overview', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`, // TODO: Use proper auth context
-          },
+        const [credentials, projects] = await Promise.all([
+          api.credentials.list().catch(() => []),
+          api.projects.list().catch(() => [])
+        ]);
+
+        let totalCost = 0;
+        const providerData: CloudProvider[] = [];
+
+        const endDate = new Date().toISOString().split('T')[0];
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        await Promise.all(
+          credentials.map(async (cred: any) => {
+            try {
+              const costs = await api.costs.getCredentialCosts(cred.id, startDate, endDate);
+              const credentialCost = costs.reduce((sum: number, c: any) => sum + (c.totalCost || 0), 0);
+              
+              totalCost += credentialCost;
+              
+              providerData.push({
+                name: cred.provider || 'Unknown',
+                credentialId: cred.id,
+                resources: cred.resourceCount || 0,
+                cost: credentialCost,
+                status: credentialCost > 1000 ? "warning" : "healthy",
+                region: cred.region
+              });
+            } catch (err) {
+              // If costs API fails, still show the provider without cost data
+              providerData.push({
+                name: cred.provider || 'Unknown',
+                credentialId: cred.id,
+                resources: cred.resourceCount || 0,
+                cost: 0,
+                status: "healthy",
+                region: cred.region
+              });
+              console.warn(`Failed to fetch costs for ${cred.id}:`, err);
+            }
+          })
+        );
+
+        let totalResources = 0;
+        await Promise.all(
+          projects.map(async (project: any) => {
+            try {
+              const resources = await api.projects.getResources(project.id);
+              totalResources += resources.length;
+            } catch (err) {
+              console.warn(`Failed to fetch resources for project ${project.id}:`, err);
+            }
+          })
+        );
+
+        setStats({
+          totalResources,
+          totalCost,
+          activeProviders: credentials.length,
+          activeProjects: projects.length,
+          providers: providerData
         });
-
-        if (response.status === 401) {
-          // TODO: Redirect to login or show unauthorized message
-          setError('Unauthorized access. Please log in.');
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-
-        const data = await response.json();
-        setStats(data);
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        // TODO: Mock data for development - remove in production
+        // Set default stats instead of showing error
         setStats({
-          totalResources: 847,
-          totalCost: 4250.80,
-          activeProviders: 3,
-          securityScore: 92,
-          providers: [
-            { name: "AWS", resources: 342, cost: 1890.50, status: "healthy", usage: 75 },
-            { name: "Azure", resources: 298, cost: 1650.30, status: "warning", usage: 82 },
-            { name: "GCP", resources: 207, cost: 710.00, status: "healthy", usage: 45 },
-          ],
+          totalResources: 0,
+          totalCost: 0,
+          activeProviders: 0,
+          activeProjects: 0,
+          providers: []
         });
       } finally {
         setLoading(false);
@@ -119,12 +169,10 @@ export function DashboardOverview() {
 
   if (error) {
     return (
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="text-destructive">Error Loading Dashboard</CardTitle>
-          <CardDescription>{error}</CardDescription>
-        </CardHeader>
-      </Card>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
@@ -132,25 +180,16 @@ export function DashboardOverview() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "healthy": return "bg-green-500";
-      case "warning": return "bg-yellow-500";
-      case "error": return "bg-red-500";
-      default: return "bg-gray-500";
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "healthy": return <Badge className="bg-green-100 text-green-800">Healthy</Badge>;
-      case "warning": return <Badge className="bg-yellow-100 text-yellow-800">Warning</Badge>;
-      case "error": return <Badge className="bg-red-100 text-red-800">Error</Badge>;
-      default: return <Badge>Unknown</Badge>;
+      case "healthy": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "warning": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "error": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
+      {/* Overview Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -158,93 +197,179 @@ export function DashboardOverview() {
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalResources.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 mr-1" />
-              +12% from last month
+            <div className="text-2xl font-bold">{stats.totalResources}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Across all providers
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
+            <CardTitle className="text-sm font-medium">Monthly Spending</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalCost.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingDown className="inline h-3 w-3 mr-1" />
-              -5% from last month
+            <div className="text-2xl font-bold">${stats.totalCost.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Last 30 days
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Providers</CardTitle>
+            <CardTitle className="text-sm font-medium">Connected Providers</CardTitle>
             <Cloud className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeProviders}</div>
-            <p className="text-xs text-muted-foreground">AWS, Azure, GCP</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cloud accounts
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.securityScore}%</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.securityScore >= 90 ? (
-                <>
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
-                  Excellent security
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="inline h-3 w-3 mr-1" />
-                  Needs attention
-                </>
-              )}
+            <div className="text-2xl font-bold">{stats.activeProjects}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              In your workspace
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Provider Details */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {stats.providers.map((provider) => (
-          <Card key={provider.name}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">{provider.name}</CardTitle>
-              {getStatusBadge(provider.status)}
+      {/* Connected Providers */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Connected Providers</CardTitle>
+              <CardDescription>
+                Overview of your cloud provider accounts
+              </CardDescription>
+            </div>
+            <Link href="/dashboard/providers">
+              <Button variant="outline" size="sm">
+                Manage
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {stats.providers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Cloud className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground">No cloud providers connected</p>
+              <Link href="/dashboard/providers">
+                <Button variant="outline" size="sm" className="mt-4">
+                  Connect Provider
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {stats.providers.map((provider) => (
+                <div
+                  key={provider.credentialId}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <Image
+                      src={providerIcons[provider.name] || providerIcons.AWS}
+                      alt={provider.name}
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{provider.name}</span>
+                        <Badge className={getStatusColor(provider.status)}>
+                          {provider.status}
+                        </Badge>
+                      </div>
+                      {provider.region && (
+                        <p className="text-sm text-muted-foreground">
+                          Region: {provider.region}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Resources</p>
+                        <p className="text-lg font-semibold">{provider.resources}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Monthly Cost</p>
+                        <p className="text-lg font-semibold">${provider.cost.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="hover:border-primary transition-colors cursor-pointer">
+          <Link href="/dashboard/resources">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Server className="h-4 w-4" />
+                Manage Resources
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Resources</span>
-                  <span className="font-medium">{provider.resources}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Monthly Cost</span>
-                  <span className="font-medium">${provider.cost.toLocaleString()}</span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Usage</span>
-                  <span className="font-medium">{provider.usage}%</span>
-                </div>
-                <Progress value={provider.usage} className="h-2" />
-              </div>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                View and control your cloud infrastructure
+              </p>
             </CardContent>
-          </Card>
-        ))}
+          </Link>
+        </Card>
+
+        <Card className="hover:border-primary transition-colors cursor-pointer">
+          <Link href="/dashboard/billing">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                View Billing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Monitor costs and manage invoices
+              </p>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="hover:border-primary transition-colors cursor-pointer">
+          <Link href="/projects">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Manage Projects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Organize your cloud resources by project
+              </p>
+            </CardContent>
+          </Link>
+        </Card>
       </div>
     </div>
   );

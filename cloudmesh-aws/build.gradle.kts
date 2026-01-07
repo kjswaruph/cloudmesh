@@ -15,6 +15,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:sts")
     implementation("software.amazon.awssdk:ec2")
+    implementation("software.amazon.awssdk:costexplorer")
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.42")

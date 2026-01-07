@@ -14,7 +14,7 @@ public class AzureCredentialsService {
                     .tenantId(account.tenantId())
                     .build();
         }
-        // ADC: environment variables (AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_CLIENT_SECRET) or managed identity
+
         return new DefaultAzureCredentialBuilder().build();
     }
 }

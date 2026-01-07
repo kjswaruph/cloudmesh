@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { ProblemSolutionSection } from "@/components/ProblemSolutionSection";
@@ -17,8 +18,8 @@ export default function Home() {
     let cancelled = false;
     const check = async () => {
       try {
-        const res = await fetch('/api/me', { credentials: 'include' });
-        if (!cancelled && res.ok) {
+        const user = await api.auth.me();
+        if (!cancelled && user?.username) {
           router.replace('/dashboard');
         }
       } catch {

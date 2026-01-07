@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 function LoginContent() {
   const [username, setUsername] = useState("");
@@ -26,37 +27,13 @@ function LoginContent() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username.trim(),
-          password: password,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Redirect to original destination or default to dashboard
-        // Use window.location for full page reload to ensure cookies are properly set
-        window.location.href = searchParams.get('redirect') || '/dashboard';
-        return;
-      }
-
-      if (res.status === 401) {
-        setError(data.error || "Invalid username or password");
-      } else if (res.status === 403) {
-        setError("Access forbidden. Please check your credentials.");
-      } else {
-        setError(data.error || `Login failed. Please try again.`);
-      }
+      await api.auth.login(username.trim(), password);
+      // Redirect to original destination or default to dashboard
+      // Use window.location for full page reload to ensure cookies are properly set
+      window.location.href = searchParams.get('redirect') || '/dashboard';
     } catch (err) {
       console.error("Login error:", err);
-      setError("Unable to connect to server. Please check your internet connection and try again.");
+      setError(err instanceof Error ? err.message : "Unable to connect to server. Please check your internet connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -76,12 +53,9 @@ function LoginContent() {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch('/auth/me', { credentials: 'include' });
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          if (data.username) {
-            router.replace('/dashboard');
-          }
+        const user = await api.auth.me();
+        if (!cancelled && user?.username) {
+          router.replace('/dashboard');
         }
       } catch {
         // User not authenticated, stay on login page
@@ -186,6 +160,7 @@ function LoginContent() {
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
                   required
+                  autoComplete="username"
                 />
               </div>
               <div className="space-y-2">
@@ -198,6 +173,7 @@ function LoginContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   required
+                  autoComplete="current-password"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

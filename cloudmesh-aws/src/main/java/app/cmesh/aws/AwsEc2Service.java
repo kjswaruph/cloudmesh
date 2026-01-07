@@ -25,7 +25,7 @@ public class AwsEc2Service {
 
     public List<String> listInstanceIds(ConnectedAwsAccount account) {
         try(Ec2Client ec2 = clientFor(account)) {
-            return ec2.describeInstances()
+            return ec2.describeInstancesPaginator()
                     .reservations()
                     .stream()
                     .flatMap(reservation -> reservation.instances().stream())

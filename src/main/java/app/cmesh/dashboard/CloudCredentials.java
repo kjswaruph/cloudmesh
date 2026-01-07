@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
@@ -44,15 +45,23 @@ public class CloudCredentials {
     @Column(name = "last_validated_at")
     @UpdateTimestamp
     private Instant lastValidatedAt;
+
+    @Column(name = "last_sync_at")
+    private LocalDateTime lastSyncAt;
+
+    @Column(name = "last_sync_status")
+    private String lastSyncStatus; // SUCCESS, FAILED, IN_PROGRESS
+
+    @Column(name = "last_sync_error", length = 1000)
+    private String lastSyncError;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
-    public enum CredentialStatus{
+
+    public enum CredentialStatus {
         ACTIVE, INVALID, EXPIRED, PENDING
     }
 }
-
-

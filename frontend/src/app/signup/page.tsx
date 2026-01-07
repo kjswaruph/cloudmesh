@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
@@ -68,35 +69,19 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/auth/signup`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          username: username.trim(),
-          password: password,
-        }),
+      await api.auth.signup({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        username: username.trim(),
+        password: password,
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Successfully registered and auto-logged in
-        // Use window.location for full page reload to ensure cookies are properly set
-        window.location.href = "/dashboard";
-        return;
-      }
-
-      // Handle errors
-      setError(data.error || "Registration failed. Please try again.");
+      // Successfully registered and auto-logged in
+      // Use window.location for full page reload to ensure cookies are properly set
+      globalThis.location.href = "/dashboard";
     } catch (err) {
       console.error("Signup error:", err);
-      setError("Unable to connect to server. Please check your internet connection and try again.");
+      setError(err instanceof Error ? err.message : "Unable to connect to server. Please check your internet connection and try again.");
     } finally {
       setLoading(false);
     }
