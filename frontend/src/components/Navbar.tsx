@@ -21,17 +21,14 @@ export function Navbar() {
             <NavigationMenuLink href="#features" className="text-base font-medium hover:text-primary transition-colors">Features</NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuLink href="#pricing" className="text-base font-medium hover:text-primary transition-colors">Pricing</NavigationMenuLink>
+            <NavigationMenuLink href="#supported-platforms" className="text-base font-medium hover:text-primary transition-colors">Platforms</NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuLink href="#integrations" className="text-base font-medium hover:text-primary transition-colors">Integrations</NavigationMenuLink>
+            <NavigationMenuLink href="#supported-platforms" className="text-base font-medium hover:text-primary transition-colors">Integrations</NavigationMenuLink>
           </NavigationMenuItem>
-          <NavigationMenuItem>
+          {/* <NavigationMenuItem>
             <NavigationMenuLink href="#docs" className="text-base font-medium hover:text-primary transition-colors">Docs</NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="#about" className="text-base font-medium hover:text-primary transition-colors">About</NavigationMenuLink>
-          </NavigationMenuItem>
+          </NavigationMenuItem> */}
         </NavigationMenuList>
       </NavigationMenu>
       {/* CTA Buttons */}
