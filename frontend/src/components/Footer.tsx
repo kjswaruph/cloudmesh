@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex gap-6 text-sm">
           <a href="#features" className="hover:underline">Features</a>
           <a href="#supported-platforms" className="hover:underline">Supported Platforms</a>
-          <a href="#faq" className="hover:underline">FAQ</a>
+          {/* <a href="#faq" className="hover:underline">FAQ</a> */}
           {/* <a href="#testimonials" className="hover:underline">Testimonials</a> */}
         </div>
       </div>

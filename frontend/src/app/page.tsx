@@ -8,7 +8,6 @@ import { Hero } from "@/components/Hero";
 import { ProblemSolutionSection } from "@/components/ProblemSolutionSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { SupportedPlatformsSection } from "@/components/SupportedPlatformsSection";
-import { FAQSection } from "@/components/FAQSection";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -58,7 +57,6 @@ export default function Home() {
       <ProblemSolutionSection />
       <FeaturesSection />
       <SupportedPlatformsSection />
-      <FAQSection />
       <Footer />
     </div>
   );
